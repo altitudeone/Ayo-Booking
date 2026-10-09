@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ayo Booking</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    .card-custom { border-radius: 12px; border: none; }
+    .app-footer { text-align: right; padding: 15px 20px; font-size: 11px; color: #888; }
+  </style>
+</head>
+<body>
+
+<div class="container py-4 flex-grow-1">
+  <div class="text-center mb-4">
+    <h3 class="fw-bold text-primary"><i class="bi bi-calendar-check"></i> Ayo Booking </h3>
+    <p class="text-muted small">Sistem Reservasi Ruangan & Lapangan Praktis</p>
+  </div>
+
+  <div class="row g-4">
+    <!-- FORM BOOKING -->
+    <div class="col-md-5">
+      <div class="card card-custom shadow-sm p-4 bg-white">
+        <h5 class="fw-bold mb-3 border-bottom pb-2">Form Reservasi</h5>
+        
+        <form id="bookingForm" onsubmit="event.preventDefault(); submitBooking();">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Nama Pemesan</label>
+            <input type="text" id="nama" class="form-control" placeholder="Masukkan nama..." required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Pilih Space / Ruangan</label>
+            <select id="ruang" class="form-select" required></select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Tanggal</label>
+            <input type="date" id="tanggal" class="form-control" onchange="loadJadwal()" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-bold">Jam Mulai</label>
+              <input type="time" id="jamMulai" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">Jam Selesai</label>
+              <input type="time" id="jamSelesai" class="form-control" required>
+            </div>
+          </div>
+
+          <button type="submit" id="btnSubmit" class="btn btn-primary w-100 fw-bold">
+            Simpan Booking
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- DAFTAR JADWAL HARI INI -->
+    <div class="col-md-7">
+      <div class="card card-custom shadow-sm p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+          <h5 class="fw-bold mb-0">Jadwal Terpakai</h5>
+          <span class="badge bg-info text-dark" id="selectedDateText"></span>
+        </div>
+
+        <div id="jadwalList">
+          <div class="text-center text-muted my-4 small">Pilih tanggal untuk melihat jadwal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-footer">
+  Crafted by: <strong>WaktuLuangProject</strong>
+</div>
+
+<script>
+  window.onload = function() {
+    // Set default tanggal hari ini
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('tanggal').value = today;
+
+    // Load Ruangan & Jadwal
+    google.script.run.withSuccessHandler(list => {
+      const select = document.getElementById('ruang');
+      select.innerHTML = list.map(r => `<option value="${r}">${r}</option>`).join('');
+    }).getRuangan();
+
+    loadJadwal();
+  };
+
+  function loadJadwal() {
+    const tgl = document.getElementById('tanggal').value;
+    document.getElementById('selectedDateText').innerText = tgl;
+    document.getElementById('jadwalList').innerHTML = '<div class="text-center text-muted my-3 small">Memuat jadwal...</div>';
+
+    google.script.run.withSuccessHandler(list => {
+      const container = document.getElementById('jadwalList');
+      if (list.length === 0) {
+        container.innerHTML = '<div class="alert alert-success text-center small mb-0">Semua ruangan kosong / tersedia!</div>';
+        return;
+      }
+
+      let html = '<div class="list-group list-group-flush">';
+      list.forEach(item => {
+        html += `
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <div class="fw-bold text-dark">${item.ruang}</div>
+              <div class="small text-muted"><i class="bi bi-person"></i> ${item.pemesan}</div>
+            </div>
+            <span class="badge bg-warning text-dark">${item.jamMulai} - ${item.jamSelesai}</span>
+          </div>`;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }).getJadwalBooking(tgl);
+  }
+
+  function submitBooking() {
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerText = 'Memproses...';
+
+    const payload = {
+      nama: document.getElementById('nama').value,
+      ruang: document.getElementById('ruang').value,
+      tanggal: document.getElementById('tanggal').value,
+      jamMulai: document.getElementById('jamMulai').value,
+      jamSelesai: document.getElementById('jamSelesai').value
+    };
+
+    google.script.run.withSuccessHandler(res => {
+      alert(res.message);
+      btn.disabled = false;
+      btn.innerText = 'Simpan Booking';
+
+      if (res.success) {
+        document.getElementById('nama').value = '';
+        loadJadwal(); // Refresh list jadwal
+      }
+    }).simpanBooking(payload);
+  }
+</script>
+</body>
+</html>
