@@ -19,4 +19,4 @@ Aplikasi ini dibikin buat mempermudah proses booking, menampilkan jadwal terpaka
 * Backend (Logika Pemrosesan):** Google Apps Script (GAS)
 * Database (Penyimpan Data):** Google Sheets
 
-  <https://github.com/user-attachments/assets/5bc8bfb6-a9d5-4be2-9c29-01240a2b5f13>
+  ![image](https://github.com/user-attachments/assets/5bc8bfb6-a9d5-4be2-9c29-01240a2b5f13)
